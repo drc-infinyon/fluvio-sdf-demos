@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  fluvio:
+    image: infinyon/fluvio:latest
+    ports:
+      - "9003:9003"
+
+  data-generator-fluvio-client:
+    build:
+      context: ./data-generator/fluvio-client
+    depends_on:
+      - fluvio
+    environment:
+      FLUVIO_TOPIC: player_events
+
+  data-generator-web-api:
+    build:
+      context: ./data-generator/web-api
+    depends_on:
+      - fluvio
+    ports:
+      - "8000:8000"  # Expose the API server
+    environment:
+      FLUVIO_TOPIC: player_events
+
+  connectors:
+    build:
+      context: ./connectors
+    depends_on:
+      - data-generator-web-api
+      - fluvio
+    environment:
+      HTTP_ENDPOINT: http://data-generator-web-api:8000/player_event
+      GRAPHITE_ENDPOINT: http://graphite:2003
+
+  sdf:
+    build:
+      context: ./sdf
+    depends_on:
+      - fluvio
+    environment:
+      SDF_CONFIG: /sdf/sdf_config.yaml
+
+  visualization:
+    build:
+      context: ./visualization
+    depends_on:
+      - sdf
+      - connectors
+    ports:
+      - "8000:8000"
+    environment:
+      DATA_SOURCE: http://sdf:9003
