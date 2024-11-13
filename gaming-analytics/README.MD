@@ -123,7 +123,7 @@ This event provides server metrics, such as CPU load, memory usage, and latency,
 
 ---
 
-## Step-by-Step
+## Step-by-Step Fluvio Client
 
 ### Prerequisites
 Ensure Fluvio is installed and running. You can follow the [Fluvio Quickstart Guide](https://www.fluvio.io/docs/getting-started/).
@@ -187,3 +187,24 @@ fluvio topic create server-metrics
 
 ### Stopping the Data Generator
 To stop the data generator, simply press `Ctrl+C` in the terminal where `main.py` is running.
+
+## Step-by-Step HTTP API
+
+**Run the API**
+Start the API server with Uvicorn:
+
+```bash
+Copy code
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+The server will now listen on http://localhost:8000 (or the specified host and port). You can access each event generator by navigating to the endpoints:
+
+Player Event: http://localhost:8000/player_event
+Purchase Event: http://localhost:8000/purchase_event
+Server Metric: http://localhost:8000/server_metric
+
+EVents are streamed in real-time here: http http://localhost:8000/stream_events
+
+### Connecting with Fluvio HTTP Connector
+Connecting with Fluvio HTTP Connector
+To integrate this API with Fluvio, configure the Fluvio HTTP connector to point to these endpoints. The connector will then fetch events as needed, enabling real-time ingestion of the generated data.

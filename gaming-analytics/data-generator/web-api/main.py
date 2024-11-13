@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi.responses import StreamingResponse
 import random
+import asyncio
 from datetime import datetime
 import json
 
@@ -81,7 +82,31 @@ def generate_server_metric():
         }
     }
 
-# Define endpoints
+# Async generator for streaming events
+async def event_stream():
+    start_time = datetime.now()
+    event_types = [generate_player_event, generate_purchase_event, generate_server_metric]
+    
+    while (datetime.now() - start_time).seconds < 600:  # Run for up to 10 minutes
+        # Randomly pick an event type and generate an event
+        event_func = random.choice(event_types)
+        event_data = event_func()
+        
+        # Format event data as JSON and append a newline
+        event_json = json.dumps(event_data) + "\n\n"
+        
+        # Yield the event as bytes
+        yield event_json.encode("utf-8")
+        
+        # Wait 0.01 seconds to achieve 100 events per second
+        await asyncio.sleep(0.01)
+
+# Streaming endpoint
+@app.get("/stream_events")
+async def stream_events():
+    return StreamingResponse(event_stream(), media_type="application/json")
+
+# Separate endpoints for single events
 @app.get("/player_event")
 async def player_event():
     event = generate_player_event()
@@ -96,4 +121,3 @@ async def purchase_event():
 async def server_metric():
     event = generate_server_metric()
     return {"key": event["key"], "event": event["event"]}
-
