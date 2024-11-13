@@ -1,7 +1,7 @@
 # gaming-events-connector.yaml
 apiVersion: 0.2.0
 meta:
-  version: 0.3.8
+  version: 0.4.3
   name: gaming-events-connector
   type: http-source
   topic:
