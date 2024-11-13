@@ -8,142 +8,182 @@ The gaming analytics demo includes the following use cases:
 
 **Server Health:** Monitoring server performance to maintain high-quality gameplay.
 
-
+---
 
 ## Event Generation
 
-The data generator directory contains two forms of data generation capability. An event generator script using the Fluvio Python client to generate events and produce to topics, and a web API wrapper that produces the same data that is collected using the HTTP source connector.
-
+The `data-generator` directory contains two forms of data generation capability: 
+- An event generator script using the Fluvio Python client to generate events and produce them to topics.
+- A web API wrapper that produces the same data, collected via the HTTP source connector.
 
 ### Player Event
-This event captures player actions within a game, such as movement, interactions, or level completion. This event is sent to `player-events` topic.
+This event captures player actions within a game, such as movement, interactions, or level completion, and is sent to the `player-events` topic.
 
 **Schema:**
-- player_id: Unique identifier for the player.
-- session_id: Unique identifier for the player's session.
-- event_type: Type of event (e.g., move, interaction, level_complete).
-- level_id: The game level where the event occurred.
-- map_id: The specific map within the level.
-- timestamp: ISO timestamp of the event.
+- **event_name**: Descriptive name for the player action (e.g., `player_action`).
+- **parameters**:
+  - **player_id**: Unique identifier for the player.
+  - **session_id**: Unique identifier for the player's session.
+  - **event_type**: Type of event (e.g., `move`, `interaction`, `level_complete`).
+  - **level_id**: The game level where the event occurred.
+  - **map_id**: The specific map within the level.
+- **event_timestamp**: ISO timestamp of the event.
+- **user_data**:
+  - **user_id**: Consistent player identifier.
+  - **platform**: Player’s platform (e.g., `PC`, `Console`).
 
 **Example:**
 ```json
 {
-  "player_id": "player_123",
-  "session_id": "session_456",
-  "event_type": "move",          // Options: "move", "interaction", "level_complete"
-  "level_id": "level_02",
-  "map_id": "map_03",
-  "timestamp": "2024-11-12T10:15:30Z"
+  "event_name": "player_action",
+  "parameters": {
+    "player_id": "player_123",
+    "session_id": "session_456",
+    "event_type": "move",
+    "level_id": "level_02",
+    "map_id": "map_03"
+  },
+  "event_timestamp": "2024-11-12T10:15:30Z",
+  "user_data": {
+    "user_id": "player_123",
+    "platform": "PC"
+  }
 }
 ```
 
-### Purchase Event
-This event represents an in-game purchase made by a player, which may be subject to fraud analysis. This event is sent to `purchase-events` topic.
+### Purchase (Transaction) Event
+This event represents an in-game purchase, which may be subject to fraud analysis, and is sent to the `purchase-events` topic.
 
 **Schema:**
-- player_id: Unique identifier for the player making the purchase.
-- item_id: Identifier of the purchased item (e.g., in-game skin or weapon).
-- price: Cost of the item.
-- currency: Currency in which the purchase was made.
-- purchase_timestamp: ISO timestamp of the purchase.
-- ip_address: IP address of the player, which could be used in fraud detection.
+- **event_name**: Standardized name for transaction events (e.g., `transaction`).
+- **parameters**:
+  - **transaction_id**: Unique identifier for the transaction.
+  - **transaction_type**: Type of transaction (e.g., `purchase`, `refund`).
+  - **currency**: Currency in which the purchase was made.
+  - **amount**: Cost of the item.
+  - **item_id**: Identifier of the purchased item (e.g., in-game skin or weapon).
+  - **item_type**: Item category (e.g., `skin`, `weapon`).
+- **event_timestamp**: ISO timestamp of the purchase.
+- **user_data**:
+  - **user_id**: Player identifier.
+  - **platform**: Player’s platform (e.g., `PC`, `Console`).
 
 **Example:**
 ```json
 {
-  "player_id": "player_123",
-  "item_id": "skin_dragon",
-  "price": 4.99,
-  "currency": "USD",
-  "purchase_timestamp": "2024-11-12T10:16:05Z",
-  "ip_address": "192.168.1.100"
+  "event_name": "transaction",
+  "parameters": {
+    "transaction_id": "trans_789",
+    "transaction_type": "purchase",
+    "currency": "USD",
+    "amount": 4.99,
+    "item_id": "skin_dragon",
+    "item_type": "skin"
+  },
+  "event_timestamp": "2024-11-12T10:16:05Z",
+  "user_data": {
+    "user_id": "player_123",
+    "platform": "PC"
+  }
 }
 ```
 
 ### Server Metric Event
-This event provides server metrics, such as CPU load, memory usage, and latency, essential for monitoring server health. This event is sent to `server-metrics` topic.
+This event provides server metrics, such as CPU load, memory usage, and latency, essential for monitoring server health, and is sent to the `server-metrics` topic.
 
 **Schema:**
-- server_id: Unique identifier for the server.
-- cpu_load: Current CPU usage as a percentage.
-- memory_usage: Current memory usage as a percentage.
-- latency: Current network latency in milliseconds.
-- timestamp: ISO timestamp of the server metrics capture.
+- **event_name**: Name for server metric events (e.g., `server_metric`).
+- **parameters**:
+  - **server_id**: Unique identifier for the server.
+  - **cpu_load**: Current CPU usage as a percentage.
+  - **memory_usage**: Current memory usage as a percentage.
+  - **latency**: Current network latency in milliseconds.
+- **event_timestamp**: ISO timestamp of the server metrics capture.
+- **server_data**:
+  - **region**: Location or region of the server (e.g., `us-west`).
+  - **server_type**: Type of server (e.g., `dedicated`, `virtual`).
 
 **Example:**
 ```json
 {
-  "server_id": "server_1",
-  "cpu_load": 78,              // CPU load percentage
-  "memory_usage": 65,          // Memory usage percentage
-  "latency": 120,              // Latency in milliseconds
-  "timestamp": "2024-11-12T10:16:30Z"
+  "event_name": "server_metric",
+  "parameters": {
+    "server_id": "server_1",
+    "cpu_load": 78,
+    "memory_usage": 65,
+    "latency": 120
+  },
+  "event_timestamp": "2024-11-12T10:16:30Z",
+  "server_data": {
+    "region": "us-west",
+    "server_type": "dedicated"
+  }
 }
 ```
 
-## Step-by-step
+---
 
-**Prerequisites**
-Make sure Fluvio is installed and running. You can follow [Fluvio Quickstart].
+## Step-by-Step
 
-**Create Topics**
-Create the Fluvio topics - player-events, purchase-events, server-metrics).
+### Prerequisites
+Ensure Fluvio is installed and running. You can follow the [Fluvio Quickstart Guide](https://www.fluvio.io/docs/getting-started/).
 
-Run the following commands to create these topics:
+### Create Topics
+Create the necessary Fluvio topics: `player-events`, `purchase-events`, and `server-metrics` by running the following commands:
 
 ```bash
 fluvio topic create player-events
 fluvio topic create purchase-events
 fluvio topic create server-metrics
 ```
-Navigate to the data-generator/fluvio-client Directory:
 
-```bash
-cd ./data-generator/fluvio-client
-```
+### Running the Data Generator
 
-Set Up a Virtual Environment (Optional but recommended):
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
+1. **Navigate to the `data-generator/fluvio-client` Directory:**
 
-**Install Dependencies**
+   ```bash
+   cd path/to/gaming-analytics/data-generator/fluvio-client
+   ```
 
-If you haven’t already, install the Fluvio client library from requirements.txt:
+2. **Set Up a Virtual Environment (Optional but recommended):**
 
-```bash
-pip install -r requirements.txt
-```
-**Run the Data Generator**
-Start the data generator by running main.py, which will begin producing events to the specified Fluvio topics:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-```bash
-python main.py
-```
+3. **Install Dependencies:**
 
-This script will generate synthetic data for player events, purchase events, and server metric events.
-Publish each event to its corresponding Fluvio topic (player-events, purchase-events, and server-metrics).
+   Install the Fluvio client library from `requirements.txt`:
 
-Print each event to the console as it is produced.
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-**Verify Data in Fluvio Topics**
-Use the following commands to verify that data is being produced to each topic.
+4. **Run the Data Generator:**
 
-```bash
-fluvio consume player-events -B
-fluvio consume purchase-events -B
-fluvio consume server-metrics -B
-```
+   Start the data generator by running `main.py`, which will begin producing events to the specified Fluvio topics:
 
-The -B flag consumes all messages in the topic from the beginning, allowing you to see the events produced by main.py.
+   ```bash
+   python main.py
+   ```
 
-**Stopping the Data Generator**
-To stop the data generator, simply press Ctrl+C in the terminal where main.py is running.
+   This script will:
+   - Generate synthetic data for **player events**, **purchase events**, and **server metric events**.
+   - Publish each event to its corresponding Fluvio topic (`player-events`, `purchase-events`, and `server-metrics`).
+   - Print each event to the console as it is produced.
 
+5. **Verify Data in Fluvio Topics:**
 
+   Use the following commands to verify that data is being produced to each topic:
 
+   ```bash
+   fluvio consume player-events -B
+   fluvio consume purchase-events -B
+   fluvio consume server-metrics -B
+   ```
 
+   The `-B` flag consumes all messages in the topic from the beginning, allowing you to see the events produced by `main.py`.
 
-[Fluvio Quickstart]
+### Stopping the Data Generator
+To stop the data generator, simply press `Ctrl+C` in the terminal where `main.py` is running.
