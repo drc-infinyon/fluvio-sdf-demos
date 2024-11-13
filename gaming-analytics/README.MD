@@ -205,6 +205,6 @@ Server Metric: http://localhost:8000/server_metric
 
 EVents are streamed in real-time here: http http://localhost:8000/stream_events
 
-### Connecting with Fluvio HTTP Connector
-Connecting with Fluvio HTTP Connector
+**Connect with Fluvio HTTP Connector**
+
 To integrate this API with Fluvio, configure the Fluvio HTTP connector to point to these endpoints. The connector will then fetch events as needed, enabling real-time ingestion of the generated data.
