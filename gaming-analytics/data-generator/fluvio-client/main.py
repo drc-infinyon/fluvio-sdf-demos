@@ -1,10 +1,11 @@
 import random
 import time
 from datetime import datetime
-from fluvio import Fluvio, FluvioError
+from fluvio import Fluvio
+import json
 
-# Initialize the Fluvio client
-fluvio = Fluvio()
+# Connect to the Fluvio client
+fluvio = Fluvio.connect()
 
 # Sample data templates
 player_ids = [f"player_{i}" for i in range(1, 100)]
@@ -16,85 +17,103 @@ platforms = ["PC", "Console"]
 
 # Function to generate player event
 def generate_player_event():
+    player_id = random.choice(player_ids)
     return {
-        "event_name": "player_action",
-        "parameters": {
-            "player_id": random.choice(player_ids),
-            "session_id": f"session_{random.randint(1000, 9999)}",
-            "event_type": random.choice(["move", "interaction", "level_complete"]),
-            "level_id": random.choice(levels),
-            "map_id": random.choice(maps)
-        },
-        "event_timestamp": datetime.utcnow().isoformat(),
-        "user_data": {
-            "user_id": random.choice(player_ids),
-            "platform": random.choice(platforms)
+        "key": player_id,
+        "event": {
+            "event_name": "player_action",
+            "parameters": {
+                "player_id": player_id,
+                "session_id": f"session_{random.randint(1000, 9999)}",
+                "event_type": random.choice(["move", "interaction", "level_complete"]),
+                "level_id": random.choice(levels),
+                "map_id": random.choice(maps)
+            },
+            "event_timestamp": datetime.utcnow().isoformat(),
+            "user_data": {
+                "user_id": player_id,
+                "platform": random.choice(platforms)
+            }
         }
     }
 
-# Function to generate transaction event
+# Function to generate purchase event
 def generate_purchase_event():
+    transaction_id = f"trans_{random.randint(1000, 9999)}"
+    player_id = random.choice(player_ids)
     return {
-        "event_name": "transaction",
-        "parameters": {
-            "transaction_id": f"trans_{random.randint(1000, 9999)}",
-            "transaction_type": "purchase",
-            "currency": "USD",
-            "amount": round(random.uniform(0.99, 29.99), 2),
-            "item_id": random.choice(items),
-            "item_type": "skin"
-        },
-        "event_timestamp": datetime.utcnow().isoformat(),
-        "user_data": {
-            "user_id": random.choice(player_ids),
-            "platform": random.choice(platforms)
+        "key": transaction_id,
+        "event": {
+            "event_name": "transaction",
+            "parameters": {
+                "transaction_id": transaction_id,
+                "transaction_type": "purchase",
+                "currency": "USD",
+                "amount": round(random.uniform(0.99, 29.99), 2),
+                "item_id": random.choice(items),
+                "item_type": "skin"
+            },
+            "event_timestamp": datetime.utcnow().isoformat(),
+            "user_data": {
+                "user_id": player_id,
+                "platform": random.choice(platforms)
+            }
         }
     }
 
 # Function to generate server metric event
 def generate_server_metric():
+    server_id = random.choice(servers)
     return {
-        "event_name": "server_metric",
-        "parameters": {
-            "server_id": random.choice(servers),
-            "cpu_load": random.randint(20, 100),
-            "memory_usage": random.randint(30, 90),
-            "latency": random.randint(50, 300)
-        },
-        "event_timestamp": datetime.utcnow().isoformat(),
-        "server_data": {
-            "region": "us-west",
-            "server_type": "dedicated"
+        "key": server_id,
+        "event": {
+            "event_name": "server_metric",
+            "parameters": {
+                "server_id": server_id,
+                "cpu_load": random.randint(20, 100),
+                "memory_usage": random.randint(30, 90),
+                "latency": random.randint(50, 300)
+            },
+            "event_timestamp": datetime.utcnow().isoformat(),
+            "server_data": {
+                "region": "us-west",
+                "server_type": "dedicated"
+            }
         }
     }
 
 # Publish events to Fluvio topics
 def publish_events():
     try:
+        # Producers for each topic
         player_topic = fluvio.topic_producer("player-events")
         purchase_topic = fluvio.topic_producer("purchase-events")
         server_topic = fluvio.topic_producer("server-metrics")
         
         while True:
-            player_event = generate_player_event()
-            purchase_event = generate_purchase_event()
-            server_metric = generate_server_metric()
+            # Generate events
+            player_event_data = generate_player_event()
+            purchase_event_data = generate_purchase_event()
+            server_metric_data = generate_server_metric()
             
-            player_topic.send("player-events", str(player_event))
+            # Encode key and event as UTF-8 bytes
+            player_topic.send(player_event_data["key"].encode("utf-8"), json.dumps(player_event_data["event"]).encode("utf-8"))
             player_topic.flush()
-            purchase_topic.send("purchase-events", str(purchase_event))
+            
+            purchase_topic.send(purchase_event_data["key"].encode("utf-8"), json.dumps(purchase_event_data["event"]).encode("utf-8"))
             purchase_topic.flush()
-            server_topic.send("server-metrics", str(server_metric))
+            
+            server_topic.send(server_metric_data["key"].encode("utf-8"), json.dumps(server_metric_data["event"]).encode("utf-8"))
             server_topic.flush()
             
-            print(f"Sent player event: {player_event}")
-            print(f"Sent purchase event: {purchase_event}")
-            print(f"Sent server metric: {server_metric}")
+            print(f"Sent player event: {player_event_data}")
+            print(f"Sent purchase event: {purchase_event_data}")
+            print(f"Sent server metric: {server_metric_data}")
             
             time.sleep(1 / 100)  # Generate 100 events per second
 
-    except FluvioError as e:
-        print(f"Fluvio Error: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 # Run the data generator
 if __name__ == "__main__":

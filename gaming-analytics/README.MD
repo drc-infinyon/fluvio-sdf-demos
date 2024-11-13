@@ -148,7 +148,7 @@ fluvio topic create server-metrics
 2. **Set Up a Virtual Environment (Optional but recommended):**
 
    ```bash
-   python3 -m venv venv
+   python3 -m venv gaming-analytics
    source venv/bin/activate
    ```
 

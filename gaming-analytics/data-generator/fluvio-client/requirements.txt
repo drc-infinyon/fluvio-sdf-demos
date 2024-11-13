@@ -1,1 +1,1 @@
-fluvio==0.12.0  # Specify the version as needed
+fluvio  # Specify the version as needed
