@@ -52,43 +52,65 @@
 #### Player Engagement and Retention Data
    - **Fields**: `player_id`, `session_id`, `event_type` (e.g., move, interaction), `level_id`, `map_id`, `timestamp`
    - **Example**:
-     ```json
-     {
-       "player_id": "12345",
-       "session_id": "abcd1234",
-       "event_type": "move",
-       "level_id": "level_01",
-       "map_id": "map_05",
-       "timestamp": "2024-11-12T10:00:00Z"
-     }
-     ```
+```json
+{
+    "event_name": "player_action",
+    "parameters": {
+        "player_id": "player_123",
+        "session_id": "session_456",
+        "event_type": "move",
+        "level_id": "level_02",
+        "map_id": "map_03"
+    },
+    "event_timestamp": "2024-11-12T10:15:30Z",
+    "user_data": {
+        "user_id": "player_123",
+        "platform": "PC"
+    }
+}
+```
 
 #### Purchase Data with Fraud Detection
    - **Fields**: `player_id`, `item_id`, `price`, `currency`, `purchase_timestamp`, `ip_address`
    - **Example**:
-     ```json
-     {
-       "player_id": "12345",
-       "item_id": "skin_dragon",
-       "price": 4.99,
-       "currency": "USD",
-       "purchase_timestamp": "2024-11-12T10:05:00Z",
-       "ip_address": "192.168.0.1"
-     }
-     ```
+```json
+{
+    "event_name": "transaction",
+    "parameters": {
+        "transaction_id": "trans_789",
+        "transaction_type": "purchase",
+        "currency": "USD",
+        "amount": 4.99,
+        "item_id": "skin_dragon",
+        "item_type": "skin"
+    },
+    "event_timestamp": "2024-11-12T10:16:05Z",
+    "user_data": {
+        "user_id": "player_123",
+        "platform": "PC"
+    }
+}
+```
 
 #### Server Health Data
    - **Fields**: `server_id`, `cpu_load`, `memory_usage`, `latency`, `timestamp`
    - **Example**:
-     ```json
-     {
-       "server_id": "server_1",
-       "cpu_load": 65,
-       "memory_usage": 80,
-       "latency": 120,
-       "timestamp": "2024-11-12T10:10:00Z"
-     }
-     ```
+```json
+{
+    "event_name": "server_metric",
+    "parameters": {
+        "server_id": "server_1",
+        "cpu_load": 78,
+        "memory_usage": 65,
+        "latency": 120
+    },
+    "event_timestamp": "2024-11-12T10:16:30Z",
+    "server_data": {
+        "region": "us-west",
+        "server_type": "dedicated"
+    }
+}
+```
 
 ### 3.2 Expected Outputs
 
