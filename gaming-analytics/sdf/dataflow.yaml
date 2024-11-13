@@ -2,8 +2,7 @@ apiVersion: 0.5.0
 meta:
   name: gaming-analytics
   version: 0.1.0
-  namespace: gaming
-
+  namespace: examples
 config:
   converter: json
   consumer:
@@ -39,6 +38,7 @@ types:
             type: string
           platform:
             type: string
+
   purchase-event:
     type: object
     properties:
@@ -68,6 +68,7 @@ types:
             type: string
           platform:
             type: string
+
   server-metric:
     type: object
     properties:
@@ -93,164 +94,138 @@ types:
             type: string
           server_type:
             type: string
-  aggregated-engagement:
-    type: object
-    properties:
-      level_id:
-        type: string
-      map_id:
-        type: string
-      active_players:
-        type: u32
-      avg_session_duration:
-        type: f64
-  fraud-flag:
-    type: object
-    properties:
-      user_id:
-        type: string
-      ip_address:
-        type: string
-      suspicious_purchase_count:
-        type: u32
-  server-health:
-    type: object
-    properties:
-      server_id:
-        type: string
-      cpu_load:
-        type: u32
-      latency:
-        type: u32
-      timestamp:
-        type: string
 
 topics:
   player-events:
     schema:
       value:
         type: player-event
+  
   purchase-events:
     schema:
       value:
         type: purchase-event
+  
   server-metrics:
     schema:
       value:
         type: server-metric
-  engagement-metrics:
-    schema:
-      value:
-        type: aggregated-engagement
-  fraud-detections:
-    schema:
-      value:
-        type: fraud-flag
-  server-health-metrics:
-    schema:
-      value:
-        type: server-health
 
 services:
-  # Track Player Engagement and Retention
-  track-engagement:
+  # Monitor player sessions
+  player-session-analytics:
     sources:
       - type: topic
         id: player-events
-    states:
-      session-durations:
-        type: keyed-state
-        properties:
-          key:
-            type: string
-          value:
-            type: f64
-    window:
-      tumbling:
-        duration: 30s
-      assign-timestamp:
+    transforms:
+      - operator: map
         run: |
-          fn assign_event_timestamp(event: PlayerEvent, event_time: i64) -> Result<i64> {
-            Ok(event_time)
-          }
-      partition:
-        assign-key:
-          run: |
-            fn key_by_level_map(event: PlayerEvent) -> Result<String> {
-              Ok(format!("{}_{}", event.parameters.level_id, event.parameters.map_id))
-            }
-        update-state:
-          run: |
-            fn update_session_duration(event: PlayerEvent) -> Result<()> {
-              session_durations().insert(event.parameters.player_id.clone(), 30.0);  // Placeholder duration
-              Ok(())
-            }
-      flush:
-        run: |
-          fn get_engagement_metrics() -> Result<AggregatedEngagement> {
-            let level_id = "level_01";
-            let map_id = "map_05";
-            let active_players = session_durations().len() as u32;
-            let avg_session_duration = 30.0;  // Placeholder
-            Ok(AggregatedEngagement {
-              level_id: level_id.to_string(),
-              map_id: map_id.to_string(),
-              active_players,
-              avg_session_duration
+          fn analyze_player_session(event: PlayerEvent) -> Result<PlayerSessionSummary> {
+            // Implement your logic to summarize player sessions
+            Ok(PlayerSessionSummary {
+              player_id: event.parameters.player_id.clone(),
+              event_count: 1,  // Example placeholder
             })
           }
     sinks:
       - type: topic
-        id: engagement-metrics
+        id: player-session-summaries
 
-  # Purchase Fraud Detection
-  detect-fraud:
+  # Aggregate purchases
+  purchase-aggregator:
     sources:
       - type: topic
         id: purchase-events
     states:
-      fraud-check:
+      purchase-aggregation:
         type: keyed-state
         properties:
           key:
             type: string
           value:
-            type: u32
+            type: object
+            properties:
+              total_amount:
+                type: f64
+              transaction_count:
+                type: u32
     transforms:
       - operator: map
         run: |
-          fn check_fraud(event: PurchaseEvent) -> Result<Option<FraudFlag>> {
-            let suspicious_count = fraud_check().get(&event.user_data.user_id).unwrap_or(0);
-            if suspicious_count > 3 {  // Example rule: 3 purchases in a minute
-              Ok(Some(FraudFlag {
-                user_id: event.user_data.user_id.clone(),
-                ip_address: event.parameters.ip_address.clone(),
-                suspicious_purchase_count: suspicious_count
-              }))
-            } else {
-              fraud_check().insert(event.user_data.user_id.clone(), suspicious_count + 1);
-              Ok(None)
-            }
+          fn aggregate_purchases(event: PurchaseEvent) -> Result<PurchaseAggregation> {
+            let mut aggregation = purchase_aggregation().get_or_default(&event.user_data.user_id);
+
+            // Update the aggregation state
+            aggregation.total_amount += event.parameters.amount;
+            aggregation.transaction_count += 1;
+
+            Ok(aggregation)
           }
     sinks:
       - type: topic
-        id: fraud-detections
+        id: purchase-aggregates
 
-  # Monitor Server Health Metrics
-  monitor-server-health:
+  # Monitor server health
+  server-health-monitor:
     sources:
       - type: topic
         id: server-metrics
     transforms:
-      - operator: filter-map
+      - operator: filter
         run: |
-          fn monitor_server(event: ServerMetric) -> Result<Option<ServerHealth>> {
-            if event.parameters.cpu_load > 80 || event.parameters.latency > 100 {  // Example thresholds
-              Ok(Some(ServerHealth {
-                server_id: event.parameters.server_id.clone(),
-                cpu_load: event.parameters.cpu_load,
-                latency: event.parameters.latency,
-                timestamp: event.event_timestamp.clone(),
+          fn is_server_overloaded(metric: ServerMetric) -> Result<bool> {
+            Ok(metric.parameters.cpu_load > 80 || metric.parameters.memory_usage > 80)
+          }
+    sinks:
+      - type: topic
+        id: server-alerts
+
+  # Detect fraudulent transactions
+  fraud-detection:
+    sources:
+      - type: topic
+        id: purchase-events
+    states:
+      user-purchase-stats:
+        type: keyed-state
+        properties:
+          key:
+            type: string
+          value:
+            type: object
+            properties:
+              transaction_count:
+                type: u32
+              currencies:
+                type: list
+                items:
+                  type: string
+    transforms:
+      - operator: flat-map
+        run: |
+          fn detect_fraud(event: PurchaseEvent) -> Result<Option<FraudAlert>> {
+            let user_id = event.user_data.user_id.clone();
+            let mut stats = user_purchase_stats().get_or_default(&user_id);
+
+            // Update transaction count and currency list
+            stats.transaction_count += 1;
+            if !stats.currencies.contains(&event.parameters.currency) {
+              stats.currencies.push(event.parameters.currency.clone());
+            }
+
+            // Define fraud criteria
+            let is_frequent = stats.transaction_count > 5; // Example threshold
+            let is_multi_currency = stats.currencies.len() > 1;
+
+            // Return fraud alert if criteria are met
+            if is_frequent || is_multi_currency {
+              Ok(Some(FraudAlert {
+                user_id,
+                reason: if is_frequent {
+                  "Too frequent transactions".to_string()
+                } else {
+                  "Multiple currency transactions".to_string()
+                },
               }))
             } else {
               Ok(None)
@@ -258,4 +233,4 @@ services:
           }
     sinks:
       - type: topic
-        id: server-health-metrics
+        id: fraud-alerts
