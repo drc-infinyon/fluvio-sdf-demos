@@ -1,7 +1,7 @@
 
 # Real Time Gaming Analytics Demo
 
-**Goal**: Demonstrate real-time data ingestion, processing, transformation, and visualization for a analytics in gaming, using Fluvio, SDF, and visualization tools.
+**Goal**: Demonstrate real-time data ingestion, processing, transformation, and visualization for analytics in gaming, using Fluvio, SDF, and visualization tools.
 
 **Audience**: Architects and technology leaders in gaming
 
