@@ -5,4 +5,15 @@ WORKDIR /app
 COPY . /app
 RUN pip install -r requirements.txt
 
+# installs Fluvio with sdf
+RUN apt-get update
+RUN apt-get install -y curl unzip
+RUN apt-get install -y tini openssl curl
+RUN curl -fsS "https://hub.infinyon.cloud/install/install.sh?ctx=ga-demo" | bash
+ENV PATH "$PATH:/root/.fluvio/bin"
+ENV PATH "$PATH:/root/.fvm/bin"
+
+RUN /root/.fluvio/bin/fluvio profile add docker 127.0.0.1:9103 docker
+
 CMD ["python", "main.py"]
+# CMD ["tail", "-f", "/dev/null"]
