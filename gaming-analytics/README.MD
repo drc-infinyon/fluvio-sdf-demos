@@ -208,3 +208,194 @@ EVents are streamed in real-time here: http http://localhost:8000/stream_events
 **Connect with Fluvio HTTP Connector**
 
 To integrate this API with Fluvio, configure the Fluvio HTTP connector to point to these endpoints. The connector will then fetch events as needed, enabling real-time ingestion of the generated data.
+
+
+
+
+-----
+#   player-event:
+#     type: object
+#     properties:
+#       event_name:
+#         type: string
+#       parameters:
+#        type: player-event-parameters
+#       event_timestamp:
+#         type: string
+#       user_data:
+#         type: object
+#         properties:
+#           user_id:
+#             type: string
+#           platform:
+#             type: string
+
+#   purchase-event:
+#     type: object
+#     properties:
+#       event_name:
+#         type: string
+#       parameters:
+#         type: object
+#         properties:
+#           transaction_id:
+#             type: string
+#           transaction_type:
+#             type: string
+#           currency:
+#             type: string
+#           amount:
+#             type: f64
+#           item_id:
+#             type: string
+#           item_type:
+#             type: string
+#       event_timestamp:
+#         type: string
+#       user_data:
+#         type: object
+#         properties:
+#           user_id:
+#             type: string
+#           platform:
+#             type: string
+
+#   server-metric:
+#     type: object
+#     properties:
+#       event_name:
+#         type: string
+#       parameters:
+#         type: object
+#         properties:
+#           server_id:
+#             type: string
+#           cpu_load:
+#             type: u32
+#           memory_usage:
+#             type: u32
+#           latency:
+#             type: u32
+#       event_timestamp:
+#         type: string
+#       server_data:
+#         type: object
+#         properties:
+#           region:
+#             type: string
+#           server_type:
+#             type: string
+
+# topics:
+#   player-events:
+#     schema:
+#       value:
+#         type: player-event
+  
+#   purchase-events:
+#     schema:
+#       value:
+#         type: purchase-event
+  
+#   server-metrics:
+#     schema:
+#       value:
+#         type: server-metric
+
+# services:
+#   # Monitor player sessions
+#   player-session-analytics:
+#     sources:
+#       - type: topic
+#         id: player-events
+#     transforms:
+#       - operator: map
+#         run: |
+#           fn analyze_player_session(event: PlayerEvent) -> Result<PlayerSessionSummary> {
+#             // Implement your logic to summarize player sessions
+#             Ok(PlayerSessionSummary {
+#               player_id: event.parameters.player_id.clone(),
+#               event_count: 1,  // Example placeholder
+#             })
+#           }
+#     sinks:
+#       - type: topic
+#         id: player-session-summaries
+
+#   # Aggregate purchases
+#   purchase-aggregator:
+#     sources:
+#       - type: topic
+#         id: purchase-events
+
+#     transforms:
+#       - operator: map
+#         run: |
+#           fn aggregate_purchases(event: PurchaseEvent) -> Result<PurchaseAggregation> {
+#             let mut aggregation = purchase_aggregation().get_or_default(&event.user_data.user_id);
+
+#             // Update the aggregation state
+#             aggregation.total_amount += event.parameters.amount;
+#             aggregation.transaction_count += 1;
+
+#             Ok(aggregation)
+#           }
+#     sinks:
+#       - type: topic
+#         id: purchase-aggregates
+
+#   # Monitor server health
+#   server-health-monitor:
+#     sources:
+#       - type: topic
+#         id: server-metrics
+#     transforms:
+#       - operator: filter
+#         run: |
+#           fn is_server_overloaded(metric: ServerMetric) -> Result<bool> {
+#             Ok(metric.parameters.cpu_load > 80 || metric.parameters.memory_usage > 80)
+#           }
+#     sinks:
+#       - type: topic
+#         id: server-alerts
+
+#   # Detect fraudulent transactions
+#   fraud-detection:
+#     sources:
+#       - type: topic
+#         id: purchase-events
+
+#     transforms:
+#       - operator: flat-map
+#         run: |
+#           fn detect_fraud(event: PurchaseEvent) -> Result<Option<FraudAlert>> {
+#             let user_id = event.user_data.user_id.clone();
+#             let mut stats = user_purchase_stats().get_or_default(&user_id);
+
+#             // Update transaction count and currency list
+#             stats.transaction_count += 1;
+#             if !stats.currencies.contains(&event.parameters.currency) {
+#               stats.currencies.push(event.parameters.currency.clone());
+#             }
+
+#             // Define fraud criteria
+#             let is_frequent = stats.transaction_count > 5; // Example threshold
+#             let is_multi_currency = stats.currencies.len() > 1;
+
+#             // Return fraud alert if criteria are met
+#             if is_frequent || is_multi_currency {
+#               Ok(Some(FraudAlert {
+#                 user_id,
+#                 reason: if is_frequent {
+#                   "Too frequent transactions".to_string()
+#                 } else {
+#                   "Multiple currency transactions".to_string()
+#                 },
+#               }))
+#             } else {
+#               Ok(None)
+#             }
+#           }
+#     sinks:
+#       - type: topic
+#         id: fraud-alerts
