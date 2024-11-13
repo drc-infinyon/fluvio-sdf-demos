@@ -1,0 +1,18 @@
+
+
+default:
+	just -l
+
+# setup venv and enter via `source venv/bin/activate`
+setup:
+	#!/bin/bash
+	python3 -m venv venv
+	source venv/bin/activate
+	pip install -r requirements.txt
+
+# simple dev task to run the script
+smoke:
+	#!/bin/bash
+	source venv/bin/activate
+	# pip install -r requirements.txt
+	python gs_simulator.py
