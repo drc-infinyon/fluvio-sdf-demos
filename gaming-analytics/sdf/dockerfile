@@ -1,6 +1,6 @@
-FROM ubuntu:latest
+FROM rust:1-slim-bookworm
 WORKDIR /workspace
-COPY connectors/*.yaml connectors/
+# COPY connectors/*.yaml connectors/
 COPY dataflow.yaml .
 COPY run.sh .
 
@@ -8,15 +8,15 @@ COPY run.sh .
 RUN apt-get update && \
     apt-get install -y \
     curl unzip cargo
-RUN apt-get install -y rustc
-RUN apt-get install -y rustup
+# RUN apt-get install -y rustc
+# RUN apt-get install -y rustup
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
-    # Add Rust to the PATH for the current session
-    export PATH="$HOME/.cargo/bin:$PATH" && \
-    # Install a specific version of Rust
-    rustup install 1.80.0 && \
-    rustup default 1.80.0
+# RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+#     # Add Rust to the PATH for the current session
+#     export PATH="$HOME/.cargo/bin:$PATH" && \
+#     # Install a specific version of Rust
+#     rustup install 1.80.0 && \
+#     rustup default 1.80.0
 RUN rustup target add wasm32-wasip1
 
 # installs Fluvio with sdf
@@ -26,7 +26,7 @@ ENV PATH "$PATH:/root/.fvm/bin"
 
 RUN sdf setup
 
-RUN cd /workspace/connectors/ && \
-    cdk hub download infinyon/http-source@0.4.3
+# RUN cd /workspace/connectors/ && \
+#     cdk hub download infinyon/http-source@0.4.3
 
 CMD ["bash","run.sh"]

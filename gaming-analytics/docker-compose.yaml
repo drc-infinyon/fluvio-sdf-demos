@@ -91,13 +91,19 @@ services:
   #     HTTP_ENDPOINT: http://data-generator-web-api:8000/player_event
   #     GRAPHITE_ENDPOINT: http://graphite:2003
 
-  # sdf:
-  #   build:
-  #     context: ./sdf
-  #   depends_on:
-  #     - fluvio
-  #   environment:
-  #     SDF_CONFIG: /sdf/sdf_config.yaml
+  sdf:
+    build:
+      context: ./sdf
+    depends_on:
+      - cluster-setup
+    network_mode: host
+    environment:
+      SDF_CONFIG: /sdf/sdf_config.yaml
+    command: <
+      sh -c "
+        fluvio profile add docker 127.0.0.1:9103 docker &&
+        run.sh
+      "
 
   # visualization:
   #   build:
