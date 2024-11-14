@@ -7,7 +7,7 @@
 
 sdf clean
 initial_command="sdf run"
-new_command="fluvio consume speeding"
+new_command="echo running"
 
 $initial_command > output.log 2>&1 &
 initial_pid=$!

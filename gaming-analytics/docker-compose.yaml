@@ -95,10 +95,15 @@ services:
     network_mode: host
     environment:
       SDF_CONFIG: /sdf/sdf_config.yaml
-    command: <
+    command: >
       sh -c "
-        fluvio profile add docker 127.0.0.1:9103 docker &&
-        run.sh
+        while true; do \
+          echo \"Adding fluvio profile\"; \
+          fluvio profile add docker 127.0.0.1:9103 docker; \
+          fluvio profile list; \
+          bash run.sh; \
+          sleep 10; \
+        done
       "
 
   # visualization:
