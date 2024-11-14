@@ -4,6 +4,7 @@
 # docker compose restart data-generator-fluvio-client seems to sometimes be needed
 start:
 	docker compose up --detach
+	echo Access 127.0.0.1:3001 to view the demo dashboard
 
 stop:
 	docker compose down -v

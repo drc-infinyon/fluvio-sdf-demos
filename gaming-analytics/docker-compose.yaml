@@ -106,6 +106,14 @@ services:
         done
       "
 
+  viz2:
+    build:
+      context: ./viz2
+      dockerfile: docker/Dockerfile
+    network_mode: host
+    volumes:
+      - ./viz2/static:/app/static
+
   # visualization:
   #   build:
   #     context: ./visualization
