@@ -10,5 +10,6 @@ stop:
 
 # after dockerfile updates, starting w/ --build may be required
 # slow as this reubuilds images
+# docker compose up --build --no-deps SERVICE may also be useful
 fresh-start:
 	docker compose up --build --detach

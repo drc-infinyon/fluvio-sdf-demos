@@ -15,5 +15,6 @@ ENV PATH "$PATH:/root/.fvm/bin"
 
 RUN /root/.fluvio/bin/fluvio profile add docker 127.0.0.1:9103 docker
 
-CMD ["python", "main.py"]
+CMD ["/app/run-retry.sh"]
+# CMD ["python", "main.py"]
 # CMD ["tail", "-f", "/dev/null"]

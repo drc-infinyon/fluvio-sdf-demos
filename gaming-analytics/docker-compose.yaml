@@ -65,11 +65,7 @@ services:
       - cluster-setup
     environment:
       FLUVIO_TOPIC: player-events
-    command: <
-      sh -c "
-        sleep 15 &&
-        python main.py
-      "
+    # command: sh -c "/app/run-retry.sh"
 
   # data-generator-web-api:
   #   build:
