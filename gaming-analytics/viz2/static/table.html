@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Table: Player Session Summaries</title>
+</head>
+<body>
+    <h1>Player Session Summaries</h1>
+    <div id="livedata" style="width: 600px; height: 400px;"></div>
+
+    <script>
+        // Connect to WebSocket
+        const ws = new WebSocket("ws://127.0.0.1:3001/ws/player-session-summaries");
+
+        // table format function
+        function formatTable(data) {
+            if (data.length === 0) return '<table border="1"></table>';
+            let headers = Object.keys(data[0]);
+            let table = '<table border="1"><tr>';
+            headers.forEach(header => {
+          table += `<th>${header}</th>`;
+            });
+            table += '</tr>';
+            data.forEach(item => {
+          table += '<tr>';
+          headers.forEach(header => {
+              table += `<td>${item[header]}</td>`;
+          });
+          table += '</tr>';
+            });
+            table += '</table>';
+            return table;
+        }
+
+        // Function to sort and filter top N entries
+        function sortAndFilterTopN(data, property_name, n) {
+            return data.sort((a, b) => b[property_name] - a[property_name]).slice(0, n);
+        }
+
+        // Handle WebSocket message
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const top20Data = sortAndFilterTopN(data, 'event_count', 20);
+            document.querySelector("#livedata").innerHTML = formatTable(top20Data);
+        };
+    </script>
+</body>
+</html>

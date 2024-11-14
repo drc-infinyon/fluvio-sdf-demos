@@ -10,6 +10,7 @@ fluvio = Fluvio.connect()
 # Sample data templates
 player_ids = [f"player_{i}" for i in range(1, 100)]
 items = ["sword", "shield", "potion", "armor", "skin_dragon", "skin_phoenix"]
+item_weights = [0.1, 0.1, 0.2, 0.15, 0.21, 0.18]
 maps = ["map_01", "map_02", "map_03"]
 levels = ["level_01", "level_02", "level_03"]
 servers = ["server_1", "server_2", "server_3"]
@@ -41,6 +42,7 @@ def generate_player_event():
 def generate_purchase_event():
     transaction_id = f"trans_{random.randint(1000, 9999)}"
     player_id = random.choice(player_ids)
+
     return {
         "key": transaction_id,
         "event": {
@@ -50,7 +52,7 @@ def generate_purchase_event():
                 "transaction_type": "purchase",
                 "currency": "USD",
                 "amount": round(random.uniform(0.99, 29.99), 2),
-                "item_id": random.choice(items),
+                "item_id": random.choices(items, weights=item_weights, k=1)[0],
                 "item_type": "skin"
             },
             "event_timestamp": datetime.utcnow().isoformat(),
@@ -89,27 +91,27 @@ def publish_events():
         player_topic = fluvio.topic_producer("player-events")
         purchase_topic = fluvio.topic_producer("purchase-events")
         server_topic = fluvio.topic_producer("server-metrics")
-        
+
         while True:
             # Generate events
             player_event_data = generate_player_event()
             purchase_event_data = generate_purchase_event()
             server_metric_data = generate_server_metric()
-            
+
             # Encode key and event as UTF-8 bytes
             player_topic.send(player_event_data["key"].encode("utf-8"), json.dumps(player_event_data["event"]).encode("utf-8"))
             player_topic.flush()
-            
+
             purchase_topic.send(purchase_event_data["key"].encode("utf-8"), json.dumps(purchase_event_data["event"]).encode("utf-8"))
             purchase_topic.flush()
-            
+
             server_topic.send(server_metric_data["key"].encode("utf-8"), json.dumps(server_metric_data["event"]).encode("utf-8"))
             server_topic.flush()
-            
+
             print(f"Sent player event: {player_event_data}")
             print(f"Sent purchase event: {purchase_event_data}")
             print(f"Sent server metric: {server_metric_data}")
-            
+
             time.sleep(1 / 100)  # Generate 100 events per second
 
     except Exception as e:

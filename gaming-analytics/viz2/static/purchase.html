@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Item Purchase Plot</title>
+    <script src=" https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js "></script>
+</head>
+<body>
+    <div id="chart" style="width: 600px; height: 400px;"></div>
+    <script>
+        // Initialize ECharts chart
+        // https://echarts.apache.org/handbook/en/how-to/chart-types/scatter/basic-scatter
+        var chart = echarts.init(document.querySelector("#chart"));
+
+        var items = ["Sword", "Shield", "Potion", "Armor", "Skin Dragon", "Skin Phoenix"]
+        // Set chart options
+        var option = {
+          dataZoom: [
+            {
+              type: 'slider'
+            },
+            {
+              type: 'inside'
+            }
+          ],
+          legend: {
+            data: items
+          },
+          xAxis: {
+            type: 'category',
+            data: []
+          },
+          yAxis: {
+            type: 'value'
+          },
+          series: [
+            {
+              name: 'Shield',
+              item_id: 'shield',
+              type: 'line',
+              stack: 'Total',
+              data: []
+            },
+            {
+              name: 'Potion',
+              item_id: 'potion',
+              type: 'line',
+              stack: 'Total',
+              data: []
+            },
+            {
+              name: 'Armor',
+              item_id: 'armor',
+              type: 'line',
+              stack: 'Total',
+              data: []
+            },
+            {
+              name: 'Skin Dragon',
+              item_id: 'skin_dragon',
+              type: 'line',
+              stack: 'Total',
+              data: []
+            },
+            {
+              name: 'Skin Phoenix',
+              item_id: 'skin_phoenix',
+              type: 'line',
+              stack: 'Total',
+              data: []
+            }
+          ]
+        };
+        chart.setOption(option);
+
+        // Connect to WebSocket
+        const ws = new WebSocket("ws://localhost:3001/ws/purchase-summaries");
+
+        rec_count = 0;
+        // Handle WebSocket message
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            option.xAxis.data.push(rec_count);
+            rec_count++;
+            data.forEach(item => {
+                const seriesIndex = option.series.findIndex(series => series.item_id === item.item_id);
+                if (seriesIndex !== -1) {
+                    option.series[seriesIndex].data.push(item.total_amount);
+                }
+            });
+            chart.setOption(option);
+        };
+    </script>
+</body>
+</html>
