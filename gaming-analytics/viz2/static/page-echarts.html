@@ -37,7 +37,7 @@
         chart.setOption(option);
 
         // Connect to WebSocket
-        const ws = new WebSocket("ws://localhost:3000/ws/foo");
+        const ws = new WebSocket("ws://localhost:3001/ws/foo");
 
         // Handle WebSocket message
         ws.onmessage = (event) => {
