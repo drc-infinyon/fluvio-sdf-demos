@@ -24,7 +24,7 @@ types:
         type: string
       map_id:
         type: string
-  
+
   user-data:
     type: object
     properties:
@@ -58,6 +58,47 @@ types:
     items:
       type: player-session-summary
 
+  purchase-event-parameters:
+    type: object
+    properties:
+      transaction_id:
+        type: string
+      transaction_type:
+        type: string
+      currency:
+        type: string
+      amount:
+        type: f64
+      item_id:
+        type: string
+      item_type:
+        type: string
+
+  purchase-event:
+    type: object
+    properties:
+      event_name:
+        type: string
+      parameters:
+        type: purchase-event-parameters
+      event_timestamp:
+        type: string
+      user_data:
+        type: user-data
+
+  item-purchase-list:
+    type: list
+    items:
+      type: item-purchase-total
+
+  item-purchase-total:
+    type: object
+    properties:
+      item_id:
+        type: string
+      total_amount:
+        type: f64
+
 topics:
   player-events:
     schema:
@@ -68,6 +109,16 @@ topics:
     schema:
       value:
         type: events-count
+
+  purchase-events:
+    schema:
+      value:
+        type: purchase-event
+
+  purchase-summaries:
+    schema:
+      value:
+        type: item-purchase-list
 
 services:
   # Monitor player sessions
@@ -139,3 +190,68 @@ services:
     sinks:
       - type: topic
         id: player-session-summaries
+
+  purchase-analytics:
+    sources:
+      - type: topic
+        id: purchase-events
+
+    states:
+      purchase-per-item:
+        type: keyed-state
+        properties:
+          key:
+            type: string
+          value:
+            type: arrow-row
+            properties:
+              total_amount:
+                type: f64
+
+    window:
+      tumbling:
+        duration: 10s
+
+      assign-timestamp:
+        run: |
+          fn assign_purchase_timestamp(_event: PurchaseEvent, event_time: i64) -> Result<i64> {
+            Ok(event_time)
+          }
+
+      partition:
+        assign-key:
+          run: |
+            fn assign_purchase_key(event: PurchaseEvent) -> Result<String> {
+              Ok(event.parameters.item_id)
+            }
+
+        update-state:
+          run: |
+            fn update_purchase_amount(event: PurchaseEvent) -> Result<()> {
+              let mut state = purchase_per_item();
+              state.total_amount += event.parameters.amount;
+              state.update();
+              Ok(())
+            }
+
+      flush:
+        run: |
+          fn compute_purchase_summaries() -> Result<ItemPurchaseList> {
+            let purchase_count = purchase_per_item();
+
+            let items = purchase_count.sql("select * from purchase_per_item order by total_amount")?;
+            let rows = items.rows()?;
+            let mut purchase_summaries = vec![];
+            let key = items.key()?;
+            let amount_value = items.col("total_amount")?;
+            while rows.next() {
+              let item_id = rows.str(&key)?;
+              let total_amount = rows.f64(&amount_value)?;
+              purchase_summaries.push(ItemPurchaseTotal { item_id, total_amount });
+            }
+            Ok(purchase_summaries)
+          }
+
+    sinks:
+      - type: topic
+        id: purchase-summaries
