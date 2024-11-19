@@ -35,7 +35,7 @@ async fn ws(
         .expect("couldn't connect to fluvio");
 
         let cfg = ConsumerConfigExtBuilder::default()
-            .topic(name)
+            .topic(name.to_owned())
             .offset_start(Offset::beginning())
             .build()
             .expect("couldn't config");
@@ -49,6 +49,7 @@ async fn ws(
                 let rec: String = String::from_utf8_lossy(rec.value().as_ref()).into_owned();
                 let msg: Message = Message::Text(rec);
                 if socket.send(msg).await.is_err() {
+                    tracing::info!("/ws/{name} disconnected");
                     break;
                 }
             }
