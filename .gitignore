@@ -23,3 +23,5 @@ yarn-error.log*
 *.swp
 **.ipkg
 http-source*
+.sdf/
+__pycache__/
