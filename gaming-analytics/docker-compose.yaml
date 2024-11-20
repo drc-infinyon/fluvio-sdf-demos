@@ -116,6 +116,16 @@ services:
     network_mode: host
     volumes:
       - ./viz2/static:/app/static
+    command: >
+      sh -c "
+        while true; do \
+          echo \"Adding fluvio profile\"; \
+          fluvio profile add docker 127.0.0.1:9103 docker; \
+          fluvio profile list; \
+          /app/viz2; \
+          sleep 10; \
+        done
+      "
 
   # visualization:
   #   build:
