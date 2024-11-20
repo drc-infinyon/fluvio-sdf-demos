@@ -4,10 +4,6 @@ The gaming analytics demo includes the following use cases:
 
 **Player Engagement:** Tracking active players and monitoring engagement across levels and maps to identify where players may get stuck or disengage.
 
-**Purchase Behavior & Fraud Detection:** Real-time analytics on in-game purchases to understand item popularity and flag potential fraud.
-
-**Server Health:** Monitoring server performance to maintain high-quality gameplay.
-
 ---
 
 ## Event Generation
@@ -129,6 +125,7 @@ Navigate to the directory
 
 Run 'make start' or 'docker compose up --detach'
 
+## 
 
 ---
 
