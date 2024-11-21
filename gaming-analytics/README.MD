@@ -125,7 +125,68 @@ Navigate to the directory
 
 Run 'make start' or 'docker compose up --detach'
 
-## 
+## Directory Structure
+
+Here is the directory structure to understand the project:
+
+```
+
+├── Makefile
+├── README.MD
+├── connectors
+│   ├── gaming-events-connector.log
+│   ├── gaming-events-connector.yaml
+│   └── infinyon-http-source-0.4.3.ipkg
+├── data-generator
+│   ├── fluvio-client
+│   │   ├── dockerfile
+│   │   ├── main.py
+│   │   ├── requirements.txt
+│   │   └── run-retry.sh
+│   └── web-api
+│       ├── dockerfile
+│       ├── main.py
+│       └── requirements.txt
+├── docker-compose.yaml
+├── fluvio-cluster
+│   └── Dockerfile
+├── real-time-gaming-analytics-demo-prd.md
+├── sdf
+│   ├── dataflow.yaml
+│   ├── dockerfile
+│   └── run.sh
+└── viz2
+    ├── Cargo.lock
+    ├── Cargo.toml
+    ├── README.md
+    ├── docker
+    │   └── Dockerfile
+    ├── src
+    │   ├── main.rs
+    │   └── routes
+    │       ├── mod.rs
+    │       ├── stat.rs
+    │       └── ws.rs
+    └── static
+        ├── index.html
+        ├── page-echarts.html
+        ├── purchase.html
+        └── table.html
+```
+
+There are 5 subdirectories.
+
+The `fluvio-cluster` directory sets up the fluvio cluster to run all the services.
+
+The `data-generator` directory has two ways to generate data. The default pattern is the `fluvio-client` to produce the data directly into Fluvio topics.
+
+The `web-api` wraps the data generator into a web API which can be used by the `http-connector` in the `connectors` directory. This is an example of integrating a connector package wrapping the Fluvio client to connect to the data source via http. We have a Connector Development Kit to build custom connector packages.
+
+The `sdf` directory has the `dataflow.yaml` which is the config to create the stream processing operators and services. The developer experience for SDF includes:
+- `types` and `schemas` for `topics` based on the source data, intermediated data, processed data, and materialized views. And declaring services and operators
+- `services`, `operators`, `functions` using primitive operations like filter, map, split, merge, etc.
+
+Finally the `viz2` directory has a basic webpage with apache echarts for visualizing the tables.
 
 ---
 
