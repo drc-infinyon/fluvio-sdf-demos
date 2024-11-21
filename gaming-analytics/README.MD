@@ -123,7 +123,7 @@ Install Docker
 
 Navigate to the directory
 
-Run 'make start' or 'docker compose up --detach'
+Run `make start` or `docker compose up --detach`
 
 ## Directory Structure
 
