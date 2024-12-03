@@ -1,0 +1,14 @@
+
+default: smoke
+
+lint:
+    python -m flake8 main.py
+
+fmt:
+    python -m black main.py
+
+# run the script
+smoke:
+    #!/bin/sh
+    source venv/bin/activate
+    PY_LOG=debug python main.py

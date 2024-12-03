@@ -1,0 +1,3 @@
+fluvio  # Specify the version as needed
+flake8
+black

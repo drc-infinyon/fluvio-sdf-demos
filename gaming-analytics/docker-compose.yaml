@@ -114,6 +114,11 @@ services:
       context: ./viz2
       dockerfile: docker/Dockerfile
     network_mode: host
+    command: >
+      sh -c "
+        fluvio profile add docker 127.0.0.1:9103 docker; \
+        /app/viz2
+      "
     volumes:
       - ./viz2/static:/app/static
     command: >
